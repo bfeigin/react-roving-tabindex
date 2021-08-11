@@ -44,6 +44,75 @@ const ELEMENT_FIVE_TAB_STOP = createTabStop(ELEMENT_FIVE_ID, 5);
 const ELEMENT_SIX_ID = "element-6";
 const ELEMENT_SIX_TAB_STOP = createTabStop(ELEMENT_SIX_ID, 6);
 
+const itShouldLoopWithDisabledFirstAndLastTabStop = (
+  direction: State["direction"],
+  keyInput: EventKey
+) => {
+  let initialId: string;
+  let finalId: string;
+
+  switch (keyInput) {
+    case (EventKey.ArrowUp, EventKey.ArrowLeft):
+      initialId = ELEMENT_TWO_ID;
+      finalId = ELEMENT_THREE_ID;
+      break;
+    case (EventKey.ArrowDown, EventKey.ArrowRight):
+      initialId = ELEMENT_THREE_ID;
+      finalId = ELEMENT_TWO_ID;
+      break;
+  }
+
+  describe("when the first and last tabStops are disabled", () => {
+    const tabStops = [
+      { ...ELEMENT_ONE_TAB_STOP, disabled: true },
+      ELEMENT_TWO_TAB_STOP,
+      ELEMENT_THREE_TAB_STOP,
+      { ...ELEMENT_FOUR_TAB_STOP, disabled: true }
+    ];
+
+    const baseState: Omit<State, "loopAround"> = Object.freeze({
+      selectedId: initialId,
+      allowFocusing: false,
+      tabStops,
+      direction: direction,
+      focusOnClick: true,
+      rowStartMap: null
+    });
+
+    const action: Action = {
+      type: ActionType.KEY_DOWN,
+      payload: {
+        id: initialId,
+        key: keyInput,
+        ctrlKey: false
+      }
+    };
+
+    describe("when loopAround is disabled", () => {
+      it("should not change the reducer state", () => {
+        const stateWithoutLoopAround = {
+          ...baseState,
+          loopAround: false
+        };
+        const result = reducer(stateWithoutLoopAround, action);
+        expect(result).toEqual<State>(stateWithoutLoopAround);
+      });
+    });
+
+    describe("when loopAround is enabled", () => {
+      it("should wrap around skipping disabled tabStops", () => {
+        const stateWithLoopAround = {
+          ...baseState,
+          loopAround: true
+        };
+
+        const results = reducer(stateWithLoopAround, action);
+        expect(results.selectedId).toEqual(finalId);
+      });
+    });
+  });
+};
+
 describe("reducer", () => {
   beforeEach(() => {
     (warning as jest.Mock).mockReset();
@@ -510,6 +579,10 @@ describe("reducer", () => {
   describe("when the roving tabindex is for a toolbar", () => {
     describe("when using the 'horizontal' direction setting", () => {
       describe("when the ArrowRight key is pressed", () => {
+        itShouldLoopWithDisabledFirstAndLastTabStop(
+          "horizontal",
+          EventKey.ArrowRight
+        );
         describe("when the next tab stop is enabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_ONE_ID,
@@ -598,7 +671,7 @@ describe("reducer", () => {
           });
         });
 
-        describe("when the next tab stop is disabled and it is the last tab stop", () => {
+        describe("when the next tab stop is disabled, it is the last tab stop, and loopAround is not enabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_ONE_ID,
             allowFocusing: false,
@@ -663,6 +736,10 @@ describe("reducer", () => {
       });
 
       describe("when the ArrowLeft key is pressed", () => {
+        itShouldLoopWithDisabledFirstAndLastTabStop(
+          "horizontal",
+          EventKey.ArrowLeft
+        );
         describe("when the previous tab stop is enabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_TWO_ID,
@@ -751,7 +828,7 @@ describe("reducer", () => {
           });
         });
 
-        describe("when the previous tab stop is disabled and it is the first tab stop", () => {
+        describe("when the previous tab stop is disabled, it is the first tab stop, and loopAround is disabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_TWO_ID,
             allowFocusing: false,
@@ -1148,6 +1225,10 @@ describe("reducer", () => {
 
     describe("when using the 'vertical' direction setting", () => {
       describe("when the ArrowDown key is pressed", () => {
+        itShouldLoopWithDisabledFirstAndLastTabStop(
+          "vertical",
+          EventKey.ArrowDown
+        );
         describe("when the next tab stop is enabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_ONE_ID,
@@ -1236,7 +1317,7 @@ describe("reducer", () => {
           });
         });
 
-        describe("when the next tab stop is disabled and it is the last tab stop", () => {
+        describe("when the next tab stop is disabled, it is the last tab stop, and loopAround is disabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_ONE_ID,
             allowFocusing: false,
@@ -1301,6 +1382,10 @@ describe("reducer", () => {
       });
 
       describe("when the ArrowUp key is pressed", () => {
+        itShouldLoopWithDisabledFirstAndLastTabStop(
+          "vertical",
+          EventKey.ArrowUp
+        );
         describe("when the previous tab stop is enabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_TWO_ID,
@@ -1786,6 +1871,10 @@ describe("reducer", () => {
 
     describe("when using the 'both' direction setting", () => {
       describe("when the ArrowRight key is pressed", () => {
+        itShouldLoopWithDisabledFirstAndLastTabStop(
+          "both",
+          EventKey.ArrowRight
+        );
         describe("when the next tab stop is enabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_ONE_ID,
@@ -1874,7 +1963,7 @@ describe("reducer", () => {
           });
         });
 
-        describe("when the next tab stop is disabled and it is the last tab stop", () => {
+        describe("when the next tab stop is disabled, it is the last tab stop, and loopAround is disabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_ONE_ID,
             allowFocusing: false,
@@ -1939,6 +2028,7 @@ describe("reducer", () => {
       });
 
       describe("when the ArrowLeft key is pressed", () => {
+        itShouldLoopWithDisabledFirstAndLastTabStop("both", EventKey.ArrowLeft);
         describe("when the previous tab stop is enabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_TWO_ID,
@@ -2092,6 +2182,7 @@ describe("reducer", () => {
       });
 
       describe("when the ArrowDown key is pressed", () => {
+        itShouldLoopWithDisabledFirstAndLastTabStop("both", EventKey.ArrowDown);
         describe("when the next tab stop is enabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_ONE_ID,
@@ -2180,7 +2271,7 @@ describe("reducer", () => {
           });
         });
 
-        describe("when the next tab stop is disabled and it is the last tab stop", () => {
+        describe("when the next tab stop is disabled, it is the last tab stop, and loopAround is disabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_ONE_ID,
             allowFocusing: false,
@@ -2245,6 +2336,7 @@ describe("reducer", () => {
       });
 
       describe("when the ArrowUp key is pressed", () => {
+        itShouldLoopWithDisabledFirstAndLastTabStop("both", EventKey.ArrowDown);
         describe("when the previous tab stop is enabled", () => {
           const givenState: State = Object.freeze({
             selectedId: ELEMENT_TWO_ID,
@@ -2835,7 +2927,7 @@ describe("reducer", () => {
         });
       });
 
-      describe("when the next tab stop is disabled and it is the last tab stop in the current row", () => {
+      describe("when the next tab stop is disabled, it is the last tab stop in the current row", () => {
         const givenState: State = Object.freeze({
           selectedId: ELEMENT_ONE_ID,
           allowFocusing: false,

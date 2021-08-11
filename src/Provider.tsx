@@ -136,8 +136,11 @@ export function reducer(state: State, action: Action): State {
         return state;
       }
       const isGrid = currentTabStop.rowIndex !== null;
-      const isFirst = index === 0;
-      const isLast = index === state.tabStops.length - 1;
+      const isFirst =
+        index === state.tabStops.findIndex((tabStop) => !tabStop.disabled);
+      const isLast =
+        index ===
+        state.tabStops.map((tabStop) => !tabStop.disabled).lastIndexOf(true);
       const navigation = getNavigationValue(
         key,
         ctrlKey,
